@@ -14,14 +14,12 @@ PropositionalFormula* getCliqueFormula(int N, int col)
 			PropositionalOr* o = new PropositionalOr();
 			for (int k = 0; k < col; k++)
 			{
-				o->addDisjunct(new PropositionalFormula(true, "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k)));
-				for (int l = k + 1; l < col; l++)
+				PropositionalAnd *a = new PropositionalAnd();
+				for (int l = 0; l < col; l++)
 				{
-					PropositionalOr* d = new PropositionalOr();
-					d->addDisjunct(new PropositionalFormula(false, "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k)));
-					d->addDisjunct(new PropositionalFormula(false, "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(l)));
-					c->addConjunct(d);
+					a->addConjunct(new PropositionalFormula((k == l), "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(l)));
 				}
+				o->addDisjunct(a);
 			}
 			c->addConjunct(o);
 		}
@@ -34,10 +32,10 @@ PropositionalFormula* getCliqueFormula(int N, int col)
 			{
 				for (int k = 0; k < col; k++)
 				{
-					PropositionalOr* o = new PropositionalOr();
-					o->addDisjunct(new PropositionalFormula(false, "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k)));
-					o->addDisjunct(new PropositionalFormula(false, "x" + std::to_string(i) + "_" + std::to_string(q) + "_" + std::to_string(k)));
-					o->addDisjunct(new PropositionalFormula(false, "x" + std::to_string(j) + "_" + std::to_string(q) + "_" + std::to_string(k)));
+					PropositionalAnd* o = new PropositionalAnd(false);
+					o->addConjunct(new PropositionalFormula(true, "x" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k)));
+					o->addConjunct(new PropositionalFormula(true, "x" + std::to_string(i) + "_" + std::to_string(q) + "_" + std::to_string(k)));
+					o->addConjunct(new PropositionalFormula(true, "x" + std::to_string(j) + "_" + std::to_string(q) + "_" + std::to_string(k)));
 					c->addConjunct(o);
 				}
 			}
@@ -55,20 +53,19 @@ int main(int argc, char *argv[])
 	char toPrint;
 	std::cout << "Should edge colouring be printed? (Y/n)\n";
 	std::cin >> toPrint;
-	std::map<std::string, int> solution;
 	while (true)
 	{
 		PropositionalFormula* formula = getCliqueFormula(N, col)->getSimplified();
-		SAT sat = SAT(formula, true);
+		SAT sat = SAT(formula);
 		clock_t cl1 = clock(), cl2;
-		bool isSolved = sat.solve(solution);
+		bool isSolved = sat.solve();
 		cl2 = clock();
 		if (isSolved)
 		{
-			solution = sat.getSolution();
 			std::cout << "Solved for " << N << " in " << ((cl2 - cl1) * 1.0 / CLOCKS_PER_SEC) << " s\n";
 			if (toPrint != 'n')
 			{
+				std::map<std::string, int> solution = sat.getSolution();
 				for (std::pair<std::string, int> pair : solution)
 				{
 					if (pair.second)
